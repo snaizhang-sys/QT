@@ -185,6 +185,8 @@ export const VendorManager: React.FC<VendorManagerProps> = ({
       v.companyName.toLowerCase().includes(q) ||
       v.code.toLowerCase().includes(q) ||
       v.contactPerson.toLowerCase().includes(q) ||
+      (v.department && v.department.toLowerCase().includes(q)) ||
+      (v.jobTitle && v.jobTitle.toLowerCase().includes(q)) ||
       v.taxId.includes(q) ||
       v.phone.includes(q)
     );
@@ -220,7 +222,7 @@ export const VendorManager: React.FC<VendorManagerProps> = ({
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="搜尋廠商代碼、公司名稱、統編、窗口或電話..."
+            placeholder="搜尋廠商代碼、公司名稱、統編、窗口、部門、職稱或電話..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all placeholder:text-slate-400"
@@ -245,46 +247,65 @@ export const VendorManager: React.FC<VendorManagerProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-sm">
               <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-xs font-semibold text-slate-600">
-                  <th className="py-3 px-4">廠商代碼</th>
-                  <th className="py-3 px-4">公司名稱 / 統編</th>
-                  <th className="py-3 px-4">聯絡窗口 / 職稱</th>
-                  <th className="py-3 px-4">電話 / Email</th>
-                  <th className="py-3 px-4">地址</th>
-                  <th className="py-3 px-4">付款條件</th>
-                  <th className="py-3 px-4 text-center">操作</th>
+                <tr className="bg-slate-50/80 border-b border-slate-200 text-xs font-semibold text-slate-600 whitespace-nowrap">
+                  <th className="py-3 px-4 min-w-[110px] whitespace-nowrap">廠商代碼</th>
+                  <th className="py-3 px-4 min-w-[170px] whitespace-nowrap">公司名稱 / 統編</th>
+                  <th className="py-3 px-4 min-w-[100px] whitespace-nowrap">聯絡窗口</th>
+                  <th className="py-3 px-4 min-w-[120px] whitespace-nowrap">部門</th>
+                  <th className="py-3 px-4 min-w-[120px] whitespace-nowrap">職稱</th>
+                  <th className="py-3 px-4 min-w-[150px] whitespace-nowrap">電話 / Email</th>
+                  <th className="py-3 px-4 min-w-[170px] whitespace-nowrap">地址</th>
+                  <th className="py-3 px-4 min-w-[95px] whitespace-nowrap">付款條件</th>
+                  <th className="py-3 px-4 text-center min-w-[90px] whitespace-nowrap">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredVendors.map((vendor) => (
                   <tr key={vendor.id} className="hover:bg-emerald-50/30 transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-medium text-emerald-700 text-xs">
+                    <td className="py-3.5 px-4 font-mono font-medium text-emerald-700 text-xs whitespace-nowrap">
                       {vendor.code}
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 min-w-[170px]">
                       <div className="font-semibold text-slate-800">{vendor.companyName}</div>
+                      {vendor.englishName && (
+                        <div className="text-[11px] text-slate-400 font-normal truncate max-w-[180px]">{vendor.englishName}</div>
+                      )}
                       <div className="text-xs text-slate-400 font-mono mt-0.5">統編：{vendor.taxId}</div>
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <div className="text-slate-800 font-medium">{vendor.contactPerson}</div>
-                      <div className="text-xs text-slate-400">
-                        {vendor.department ? `${vendor.department} · ` : ''}
-                        {vendor.jobTitle || '無指定職稱'}
-                      </div>
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      {vendor.department ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                          {vendor.department}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-300">-</span>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      {vendor.jobTitle ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                          {vendor.jobTitle}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-300">-</span>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <div className="text-slate-700 font-mono text-xs">{vendor.phone}</div>
                       <div className="text-slate-400 text-xs truncate max-w-[160px]">{vendor.email}</div>
                     </td>
                     <td className="py-3.5 px-4 text-slate-600 text-xs max-w-[200px] truncate" title={vendor.address}>
                       {vendor.address}
                     </td>
-                    <td className="py-3.5 px-4 text-xs">
+                    <td className="py-3.5 px-4 text-xs whitespace-nowrap">
                       <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-600 rounded">
                         {vendor.paymentTerms || '未設定'}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => handleOpenEditModal(vendor)}
@@ -428,28 +449,32 @@ export const VendorManager: React.FC<VendorManagerProps> = ({
                     className={`w-full px-3 py-2 text-sm rounded-lg border ${
                       errors.contactPerson ? 'border-red-500 bg-red-50/30' : 'border-slate-200 focus:border-emerald-500'
                     }`}
-                    placeholder="姓名，例: 林怡君"
+                    placeholder="窗口姓名，例: 林怡君"
                   />
                   {errors.contactPerson && <p className="text-xs text-red-500 mt-1">{errors.contactPerson}</p>}
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">部門</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    所屬部門
+                  </label>
                   <input
                     type="text"
                     value={formData.department || ''}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                     className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:border-emerald-500"
-                    placeholder="例: 通路業務處"
+                    placeholder="例: 通路業務處 / 原廠支援處"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">職稱</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    擔任職稱
+                  </label>
                   <input
                     type="text"
                     value={formData.jobTitle || ''}
                     onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
                     className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:border-emerald-500"
-                    placeholder="例: 副理 / 客戶代表"
+                    placeholder="例: 業務協理 / 技術顧問"
                   />
                 </div>
               </div>

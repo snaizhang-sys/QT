@@ -132,12 +132,12 @@ export const QuotationPrintView: React.FC<QuotationPrintViewProps> = ({
           <div className="mt-6 border border-slate-200 rounded-lg overflow-hidden">
             <table className="w-full text-left border-collapse text-sm">
               <thead>
-                <tr className="bg-slate-100/80 border-b border-slate-200 text-xs font-bold text-slate-700">
-                  <th className="py-3 px-4 w-12 text-center">項次</th>
-                  <th className="py-3 px-4">產品品名及規格說明</th>
-                  <th className="py-3 px-4 w-20 text-center">數量</th>
-                  <th className="py-3 px-4 w-28 text-right">單價 (未稅)</th>
-                  <th className="py-3 px-4 w-32 text-right">複價 (小計)</th>
+                <tr className="bg-slate-100/80 border-b border-slate-200 text-xs font-bold text-slate-700 whitespace-nowrap">
+                  <th className="py-3 px-4 w-12 text-center whitespace-nowrap">項次</th>
+                  <th className="py-3 px-4 min-w-[220px] whitespace-nowrap">產品品名及規格說明</th>
+                  <th className="py-3 px-4 w-20 text-center whitespace-nowrap">數量</th>
+                  <th className="py-3 px-4 w-28 text-right whitespace-nowrap">單價 (未稅)</th>
+                  <th className="py-3 px-4 w-32 text-right whitespace-nowrap">複價 (小計)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">

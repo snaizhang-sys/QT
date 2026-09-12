@@ -455,45 +455,45 @@ export const QuotationManager: React.FC<QuotationManagerProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-sm">
               <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-xs font-semibold text-slate-600">
-                  <th className="py-3 px-4">報價單號</th>
-                  <th className="py-3 px-4">客戶名稱</th>
-                  <th className="py-3 px-4">報價 / 有效日期</th>
-                  <th className="py-3 px-4">報價人員</th>
-                  <th className="py-3 px-4 text-center">明細項數</th>
-                  <th className="py-3 px-4 text-right">報價總額 (未稅)</th>
-                  <th className="py-3 px-4 text-center">狀態</th>
-                  <th className="py-3 px-4 text-center">操作</th>
+                <tr className="bg-slate-50/80 border-b border-slate-200 text-xs font-semibold text-slate-600 whitespace-nowrap">
+                  <th className="py-3.5 px-4 min-w-[140px] whitespace-nowrap">報價單號</th>
+                  <th className="py-3.5 px-4 min-w-[180px] whitespace-nowrap">客戶名稱</th>
+                  <th className="py-3.5 px-4 min-w-[150px] whitespace-nowrap">報價 / 有效日期</th>
+                  <th className="py-3.5 px-4 min-w-[110px] whitespace-nowrap">報價人員</th>
+                  <th className="py-3.5 px-4 text-center min-w-[90px] whitespace-nowrap">明細項數</th>
+                  <th className="py-3.5 px-4 text-right min-w-[140px] whitespace-nowrap">報價總額 (未稅)</th>
+                  <th className="py-3.5 px-4 text-center min-w-[90px] whitespace-nowrap">狀態</th>
+                  <th className="py-3.5 px-4 text-center min-w-[130px] whitespace-nowrap">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredQuotations.map((quot) => (
                   <tr key={quot.id} className="hover:bg-indigo-50/20 transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-bold text-indigo-700 text-xs">
+                    <td className="py-3.5 px-4 font-mono font-bold text-indigo-700 text-xs whitespace-nowrap">
                       {quot.quotationNumber}
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 min-w-[180px]">
                       <div className="font-semibold text-slate-800">{quot.customerName}</div>
                       <div className="text-xs text-slate-400 mt-0.5 truncate max-w-[200px]" title={quot.address}>
                         {quot.address}
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 text-xs">
+                    <td className="py-3.5 px-4 text-xs whitespace-nowrap">
                       <div className="font-mono text-slate-700">{quot.quotationDate}</div>
                       <div className="font-mono text-slate-400">至 {quot.validUntil}</div>
                     </td>
-                    <td className="py-3.5 px-4 text-xs font-medium text-slate-700">
+                    <td className="py-3.5 px-4 text-xs font-medium text-slate-700 whitespace-nowrap">
                       {quot.salesPerson}
                     </td>
-                    <td className="py-3.5 px-4 text-center text-xs">
+                    <td className="py-3.5 px-4 text-center text-xs whitespace-nowrap">
                       <span className="px-2 py-0.5 bg-slate-100 rounded-full font-medium text-slate-600">
                         {quot.items.length} 項
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 text-sm">
+                    <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 text-sm whitespace-nowrap">
                       NT$ {quot.totalAmount.toLocaleString()}
                     </td>
-                    <td className="py-3.5 px-4 text-center">
+                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
                       <span className={`inline-block px-2.5 py-1 text-xs font-semibold rounded-full ${
                         quot.status === '已確認' 
                           ? 'bg-emerald-100 text-emerald-800' 
@@ -506,7 +506,7 @@ export const QuotationManager: React.FC<QuotationManagerProps> = ({
                         {quot.status || '草稿'}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => onPrint(quot)}
@@ -746,20 +746,20 @@ export const QuotationManager: React.FC<QuotationManagerProps> = ({
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse text-xs">
                       <thead>
-                        <tr className="bg-slate-100/80 border-b border-slate-200 font-semibold text-slate-700">
-                          <th className="py-2.5 px-3 w-10 text-center">#</th>
-                          <th className="py-2.5 px-3 w-60">
+                        <tr className="bg-slate-100/80 border-b border-slate-200 font-semibold text-slate-700 whitespace-nowrap">
+                          <th className="py-2.5 px-3 w-10 text-center whitespace-nowrap">#</th>
+                          <th className="py-2.5 px-3 min-w-[200px] whitespace-nowrap">
                             產品品名 <span className="text-red-500">*</span>
                           </th>
-                          <th className="py-2.5 px-3">規格說明</th>
-                          <th className="py-2.5 px-3 w-28">
+                          <th className="py-2.5 px-3 min-w-[160px] whitespace-nowrap">規格說明</th>
+                          <th className="py-2.5 px-3 min-w-[110px] text-right whitespace-nowrap">
                             單價 (NT$) <span className="text-red-500">*</span>
                           </th>
-                          <th className="py-2.5 px-3 w-20 text-center">
+                          <th className="py-2.5 px-3 min-w-[80px] text-center whitespace-nowrap">
                             數量 <span className="text-red-500">*</span>
                           </th>
-                          <th className="py-2.5 px-3 w-28 text-right">複價 (小計)</th>
-                          <th className="py-2.5 px-3 w-12 text-center">操作</th>
+                          <th className="py-2.5 px-3 min-w-[110px] text-right whitespace-nowrap">複價 (小計)</th>
+                          <th className="py-2.5 px-3 w-12 text-center whitespace-nowrap">操作</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">

@@ -268,6 +268,10 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
     setIsModalOpen(false);
   };
 
+  const getVendor = (vendorId: string) => {
+    return vendors.find((item) => item.id === vendorId);
+  };
+
   const getVendorName = (vendorId: string) => {
     const v = vendors.find((item) => item.id === vendorId);
     return v ? v.companyName : '未指定廠商';
@@ -362,14 +366,14 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
             <table className="w-full text-left border-collapse text-sm">
               <thead>
                 <tr className="bg-slate-50/80 border-b border-slate-200 text-xs font-semibold text-slate-600">
-                  <th className="py-3 px-4">產品圖 / 代碼</th>
-                  <th className="py-3 px-4">產品名稱 / 廠牌</th>
-                  <th className="py-3 px-4">供應商</th>
-                  <th className="py-3 px-4 text-right">成本價</th>
-                  <th className="py-3 px-4 text-right">建議售價</th>
-                  <th className="py-3 px-4 text-center">毛利率</th>
-                  <th className="py-3 px-4 text-center">庫存 / 單位</th>
-                  <th className="py-3 px-4 text-center">操作</th>
+                  <th className="py-3 px-4 min-w-[140px] whitespace-nowrap">產品圖 / 代碼</th>
+                  <th className="py-3 px-4 min-w-[200px]">產品名稱 / 廠牌</th>
+                  <th className="py-3 px-4 min-w-[170px] whitespace-nowrap">供應商</th>
+                  <th className="py-3 px-4 text-right min-w-[90px] whitespace-nowrap">成本價</th>
+                  <th className="py-3 px-4 text-right min-w-[100px] whitespace-nowrap">建議售價</th>
+                  <th className="py-3 px-4 text-center min-w-[80px] whitespace-nowrap">毛利率</th>
+                  <th className="py-3 px-4 text-center min-w-[90px] whitespace-nowrap">庫存 / 單位</th>
+                  <th className="py-3 px-4 text-center min-w-[90px] whitespace-nowrap">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -433,8 +437,25 @@ export const ProductManager: React.FC<ProductManagerProps> = ({
                           {prod.specification && <span className="truncate max-w-[200px]" title={prod.specification}>{prod.specification}</span>}
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-xs font-medium text-slate-600">
-                        {getVendorName(prod.vendorId)}
+                      <td className="py-3 px-4 min-w-[170px]">
+                        {(() => {
+                          const vendor = getVendor(prod.vendorId);
+                          if (!vendor) {
+                            return <span className="text-xs text-slate-400">未指定廠商</span>;
+                          }
+                          return (
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-slate-800 text-xs whitespace-nowrap inline-block">
+                                {vendor.companyName}
+                              </span>
+                              {vendor.englishName && (
+                                <span className="text-[11px] text-slate-400 font-normal break-words leading-tight mt-0.5">
+                                  {vendor.englishName}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="py-3 px-4 text-right font-mono text-slate-500 text-xs">
                         NT$ {prod.cost.toLocaleString()}
