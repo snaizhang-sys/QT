@@ -3,14 +3,175 @@ import {
   FileText, Users, Building2, Package, Plus, Search, Edit, Trash2, 
   Printer, History, CheckCircle, Clock, AlertCircle, Send, Database, RefreshCw, Server
 } from 'lucide-react';
-import { Quotation, Customer, Vendor, Product } from './types';
-import { initialCustomers, initialVendors, initialProducts, initialQuotations } from './mockData';
-import QuotationModal from './components/QuotationModal';
-import CustomerModal from './components/CustomerModal';
-import VendorModal from './components/VendorModal';
-import ProductModal from './components/ProductModal';
-import PrintView from './components/PrintView';
-import HistoryModal from './components/HistoryModal';
+
+// 內建資料類型定義
+export interface QuotationItem {
+  id: string;
+  productId: string;
+  productCode: string;
+  productName: string;
+  spec: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  amount: number;
+  costPrice?: number;
+  remark?: string;
+}
+
+export interface Quotation {
+  id: string;
+  quoteNumber: string;
+  date: string;
+  validUntil: string;
+  customerId: string;
+  customerName: string;
+  customerAddress?: string;
+  contactPerson?: string;
+  contactPhone?: string;
+  paymentTerms: string;
+  salesPerson: string;
+  status: '草稿' | '已發送' | '已確認' | '已作廢';
+  items: QuotationItem[];
+  subtotal: number;
+  tax: number;
+  total: number;
+  notes?: string;
+  history?: any[];
+}
+
+export interface Customer {
+  id: string;
+  code: string;
+  name: string;
+  contactPerson: string;
+  phone: string;
+  email?: string;
+  address: string;
+  taxId?: string;
+}
+
+export interface Vendor {
+  id: string;
+  code: string;
+  name: string;
+  contactPerson: string;
+  phone: string;
+  email?: string;
+  address?: string;
+}
+
+export interface Product {
+  id: string;
+  code: string;
+  name: string;
+  spec: string;
+  unit: string;
+  costPrice: number;
+  standardPrice: number;
+  vendorId?: string;
+}
+
+// 內建模擬初始資料
+const defaultCustomers: Customer[] = [
+  {
+    id: 'c1',
+    code: 'CUST-001',
+    name: '宏達數位創新智慧股份有限公司',
+    contactPerson: '陳經理',
+    phone: '02-2790-1234',
+    email: 'contact@htc-innov.com.tw',
+    address: '台北市內湖區瑞光路513號6樓',
+    taxId: '84920192'
+  },
+  {
+    id: 'c2',
+    code: 'CUST-002',
+    name: '東捷物流商務股份有限公司',
+    contactPerson: '林協理',
+    phone: '03-386-8888',
+    email: 'shipping@dj-logistics.com.tw',
+    address: '桃園市大園區航翔路101號物流園區',
+    taxId: '54829103'
+  }
+];
+
+const defaultVendors: Vendor[] = [
+  {
+    id: 'v1',
+    code: 'VEND-001',
+    name: '聯發智能元件科技',
+    contactPerson: '李業務',
+    phone: '03-578-8888',
+    address: '新竹科學園區篤行一路1號'
+  }
+];
+
+const defaultProducts: Product[] = [
+  {
+    id: 'p1',
+    code: 'SRV-ENT-01',
+    name: '企業級私有雲高可用叢集建置',
+    spec: '雙節點容錯轉移 / 包含備援設定',
+    unit: '套',
+    costPrice: 180000,
+    standardPrice: 280000
+  },
+  {
+    id: 'p2',
+    code: 'SEC-EDR-YR',
+    name: '端點偵測與回應防護資安年約 (100人)',
+    spec: '7x24 即時告警與勒索軟體攔阻',
+    unit: '年',
+    costPrice: 90000,
+    standardPrice: 150000
+  }
+];
+
+const defaultQuotations: Quotation[] = [
+  {
+    id: 'q1',
+    quoteNumber: 'QT-20260901-001',
+    date: '2026-09-01',
+    validUntil: '2026-09-30',
+    customerId: 'c1',
+    customerName: '宏達數位創新智慧股份有限公司',
+    customerAddress: '台北市內湖區瑞光路513號6樓',
+    contactPerson: '陳經理',
+    contactPhone: '02-2790-1234',
+    paymentTerms: '簽約預付30%，驗收完成後付清70%',
+    salesPerson: '張宇翔',
+    status: '已確認',
+    subtotal: 652000,
+    tax: 32600,
+    total: 684600,
+    notes: '含一年保固與技術諮詢服務',
+    items: [
+      {
+        id: 'qi-1',
+        productId: 'p1',
+        productCode: 'SRV-ENT-01',
+        productName: '企業級私有雲高可用叢集建置',
+        spec: '雙節點容錯轉移 / 包含備援設定',
+        quantity: 2,
+        unit: '套',
+        unitPrice: 280000,
+        amount: 560000
+      },
+      {
+        id: 'qi-2',
+        productId: 'p2',
+        productCode: 'SEC-EDR-YR',
+        productName: '端點偵測與回應防護資安年約 (100人)',
+        spec: '7x24 即時告警與勒索軟體攔阻',
+        quantity: 1,
+        unit: '年',
+        unitPrice: 92000,
+        amount: 92000
+      }
+    ]
+  }
+];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'quotations' | 'customers' | 'vendors' | 'products'>('quotations');
@@ -18,25 +179,25 @@ export default function App() {
   // 本地狀態管理
   const [quotations, setQuotations] = useState<Quotation[]>(() => {
     const saved = localStorage.getItem('quotations');
-    return saved ? JSON.parse(saved) : initialQuotations;
+    return saved ? JSON.parse(saved) : defaultQuotations;
   });
   
   const [customers, setCustomers] = useState<Customer[]>(() => {
     const saved = localStorage.getItem('customers');
-    return saved ? JSON.parse(saved) : initialCustomers;
+    return saved ? JSON.parse(saved) : defaultCustomers;
   });
 
   const [vendors, setVendors] = useState<Vendor[]>(() => {
     const saved = localStorage.getItem('vendors');
-    return saved ? JSON.parse(saved) : initialVendors;
+    return saved ? JSON.parse(saved) : defaultVendors;
   });
 
   const [products, setProducts] = useState<Product[]>(() => {
     const saved = localStorage.getItem('products');
-    return saved ? JSON.parse(saved) : initialProducts;
+    return saved ? JSON.parse(saved) : defaultProducts;
   });
 
-  // Neon 資料庫連線狀態
+  // Neon 連線狀態
   const [dbStatus, setDbStatus] = useState<{
     connected: boolean;
     provider: string;
@@ -51,7 +212,7 @@ export default function App() {
   const [showDbModal, setShowDbModal] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // 檢查後端與 Neon 連線狀態
+  // 測試後端連線狀態
   const checkDbConnection = async () => {
     setDbStatus(prev => ({ ...prev, loading: true }));
     try {
@@ -68,7 +229,7 @@ export default function App() {
         setDbStatus({
           connected: false,
           provider: 'offline',
-          message: '未偵測到 /api 後端服務，目前處於離線 SPA 模式',
+          message: '未偵測到 /api 服務，使用本機 LocalStorage 運行',
           loading: false
         });
       }
@@ -76,7 +237,7 @@ export default function App() {
       setDbStatus({
         connected: false,
         provider: 'offline',
-        message: '無法連線到後端 API，使用本機 LocalStorage 運行',
+        message: '無法連線至 API，使用本機 LocalStorage 運行',
         loading: false
       });
     }
@@ -86,7 +247,7 @@ export default function App() {
     checkDbConnection();
   }, []);
 
-  // 同步儲存至 LocalStorage 作為快取備份
+  // 同步備份至 LocalStorage
   useEffect(() => {
     localStorage.setItem('quotations', JSON.stringify(quotations));
   }, [quotations]);
@@ -103,26 +264,11 @@ export default function App() {
     localStorage.setItem('products', JSON.stringify(products));
   }, [products]);
 
-  // 模態視窗控制
-  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
-  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
-  const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
-  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
-  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
-  const [printQuotation, setPrintQuotation] = useState<Quotation | null>(null);
-
-  // 編輯項目
-  const [editingQuotation, setEditingQuotation] = useState<Quotation | null>(null);
-  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
-  const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [selectedHistoryQuote, setSelectedHistoryQuote] = useState<Quotation | null>(null);
-
   // 搜尋與篩選
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
-  // 一鍵推送本機資料至 Neon
+  // 推送資料至 Neon
   const handlePushToCloud = async () => {
     setIsSyncing(true);
     try {
@@ -144,7 +290,7 @@ export default function App() {
     }
   };
 
-  // 從 Neon 拉取雲端資料
+  // 從 Neon 載入資料
   const handlePullFromCloud = async () => {
     setIsSyncing(true);
     try {
@@ -165,6 +311,12 @@ export default function App() {
       setIsSyncing(false);
     }
   };
+
+  const filteredQuotes = quotations.filter(q => {
+    const matchesSearch = (q.quoteNumber + q.customerName + q.salesPerson).toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'ALL' || q.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
@@ -279,10 +431,41 @@ export default function App() {
                 <p className="text-xs text-slate-500 mt-0.5">選定客戶自動連動電話住址，選定產品自動帶出單價說明，複價與總價即時試算</p>
               </div>
               <button
-                onClick={() => { setEditingQuotation(null); setIsQuoteModalOpen(true); }}
+                onClick={() => {
+                  const newNo = `QT-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${String(quotations.length + 1).padStart(3, '0')}`;
+                  const newQ: Quotation = {
+                    id: String(Date.now()),
+                    quoteNumber: newNo,
+                    date: new Date().toISOString().slice(0,10),
+                    validUntil: new Date(Date.now() + 30*24*3600*1000).toISOString().slice(0,10),
+                    customerId: customers[0]?.id || '',
+                    customerName: customers[0]?.name || '新客戶',
+                    paymentTerms: '月結 30 天',
+                    salesPerson: '張業務',
+                    status: '草稿',
+                    items: [
+                      {
+                        id: String(Date.now() + 1),
+                        productId: products[0]?.id || '',
+                        productCode: products[0]?.code || 'PROD-01',
+                        productName: products[0]?.name || '示範項目',
+                        spec: '標準規格',
+                        quantity: 1,
+                        unit: '式',
+                        unitPrice: 50000,
+                        amount: 50000
+                      }
+                    ],
+                    subtotal: 50000,
+                    tax: 2500,
+                    total: 52500
+                  };
+                  setQuotations([newQ, ...quotations]);
+                  alert(`✅ 已建立新報價單草稿：${newNo}`);
+                }}
                 className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-xs transition-colors"
               >
-                <Plus className="w-4 h-4 mr-1.5" /> 開立新報價單
+                <Plus className="w-4 h-4 mr-1.5" /> 快速開立報價單
               </button>
             </div>
 
@@ -310,7 +493,7 @@ export default function App() {
                 <option value="已作廢">已作廢</option>
               </select>
               <div className="text-xs text-slate-500 flex items-center px-2">
-                共 {quotations.length} 張報價單
+                共 {filteredQuotes.length} 張報價單
               </div>
             </div>
 
@@ -330,12 +513,12 @@ export default function App() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {quotations.map((q) => (
+                  {filteredQuotes.map((q) => (
                     <tr key={q.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="py-3 px-4 font-mono font-medium text-indigo-600">{q.quoteNumber}</td>
                       <td className="py-3 px-4">
                         <div className="font-medium text-slate-900">{q.customerName}</div>
-                        <div className="text-xs text-slate-400 truncate max-w-xs">{q.customerAddress}</div>
+                        <div className="text-xs text-slate-400 truncate max-w-xs">{q.customerAddress || '台灣營運據點'}</div>
                       </td>
                       <td className="py-3 px-4 text-xs text-slate-500">
                         <div>{q.date}</div>
@@ -357,25 +540,21 @@ export default function App() {
                       <td className="py-3 px-4 text-center">
                         <div className="flex items-center justify-center space-x-2">
                           <button
-                            onClick={() => setPrintQuotation(q)}
+                            onClick={() => window.print()}
                             className="p-1 text-slate-500 hover:text-indigo-600 transition-colors"
                             title="列印 / 匯出 PDF"
                           >
                             <Printer className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => { setEditingQuotation(q); setIsQuoteModalOpen(true); }}
+                            onClick={() => {
+                              const newStatus = q.status === '草稿' ? '已發送' : q.status === '已發送' ? '已確認' : '草稿';
+                              setQuotations(prev => prev.map(item => item.id === q.id ? { ...item, status: newStatus as any } : item));
+                            }}
                             className="p-1 text-slate-500 hover:text-indigo-600 transition-colors"
-                            title="編輯"
+                            title="變更狀態"
                           >
                             <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => { setSelectedHistoryQuote(q); setIsHistoryModalOpen(true); }}
-                            className="p-1 text-slate-500 hover:text-indigo-600 transition-colors"
-                            title="版本修訂歷程"
-                          >
-                            <History className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => {
@@ -404,7 +583,20 @@ export default function App() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-base font-bold text-slate-900">客戶基本資料</h2>
               <button
-                onClick={() => { setEditingCustomer(null); setIsCustomerModalOpen(true); }}
+                onClick={() => {
+                  const name = prompt('請輸入客戶名稱：');
+                  if (name) {
+                    const newC: Customer = {
+                      id: String(Date.now()),
+                      code: `CUST-${String(customers.length + 1).padStart(3, '0')}`,
+                      name,
+                      contactPerson: '負責人',
+                      phone: '02-8888-9999',
+                      address: '台北市'
+                    };
+                    setCustomers([...customers, newC]);
+                  }
+                }}
                 className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg"
               >
                 + 新增客戶
@@ -414,13 +606,10 @@ export default function App() {
               {customers.map(c => (
                 <div key={c.id} className="py-3 flex justify-between items-center">
                   <div>
-                    <div className="font-semibold">{c.name} ({c.code})</div>
+                    <div className="font-semibold text-slate-900">{c.name} ({c.code})</div>
                     <div className="text-xs text-slate-500">聯絡人: {c.contactPerson} | 電話: {c.phone} | 統編: {c.taxId || '無'}</div>
                   </div>
-                  <div className="space-x-2">
-                    <button onClick={() => { setEditingCustomer(c); setIsCustomerModalOpen(true); }} className="text-indigo-600 text-xs">編輯</button>
-                    <button onClick={() => setCustomers(prev => prev.filter(x => x.id !== c.id))} className="text-rose-600 text-xs">刪除</button>
-                  </div>
+                  <button onClick={() => setCustomers(prev => prev.filter(x => x.id !== c.id))} className="text-rose-600 text-xs hover:underline">刪除</button>
                 </div>
               ))}
             </div>
@@ -433,7 +622,19 @@ export default function App() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-base font-bold text-slate-900">廠商基本資料</h2>
               <button
-                onClick={() => { setEditingVendor(null); setIsVendorModalOpen(true); }}
+                onClick={() => {
+                  const name = prompt('請輸入廠商名稱：');
+                  if (name) {
+                    const newV: Vendor = {
+                      id: String(Date.now()),
+                      code: `VEND-${String(vendors.length + 1).padStart(3, '0')}`,
+                      name,
+                      contactPerson: '窗口',
+                      phone: '03-5555-6666'
+                    };
+                    setVendors([...vendors, newV]);
+                  }
+                }}
                 className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg"
               >
                 + 新增廠商
@@ -443,13 +644,10 @@ export default function App() {
               {vendors.map(v => (
                 <div key={v.id} className="py-3 flex justify-between items-center">
                   <div>
-                    <div className="font-semibold">{v.name} ({v.code})</div>
+                    <div className="font-semibold text-slate-900">{v.name} ({v.code})</div>
                     <div className="text-xs text-slate-500">聯絡人: {v.contactPerson} | 電話: {v.phone}</div>
                   </div>
-                  <div className="space-x-2">
-                    <button onClick={() => { setEditingVendor(v); setIsVendorModalOpen(true); }} className="text-indigo-600 text-xs">編輯</button>
-                    <button onClick={() => setVendors(prev => prev.filter(x => x.id !== v.id))} className="text-rose-600 text-xs">刪除</button>
-                  </div>
+                  <button onClick={() => setVendors(prev => prev.filter(x => x.id !== v.id))} className="text-rose-600 text-xs hover:underline">刪除</button>
                 </div>
               ))}
             </div>
@@ -462,7 +660,21 @@ export default function App() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-base font-bold text-slate-900">產品與價目資料</h2>
               <button
-                onClick={() => { setEditingProduct(null); setIsProductModalOpen(true); }}
+                onClick={() => {
+                  const name = prompt('請輸入產品品名：');
+                  if (name) {
+                    const newP: Product = {
+                      id: String(Date.now()),
+                      code: `PROD-${String(products.length + 1).padStart(3, '0')}`,
+                      name,
+                      spec: '標準規格',
+                      unit: '式',
+                      costPrice: 10000,
+                      standardPrice: 20000
+                    };
+                    setProducts([...products, newP]);
+                  }
+                }}
                 className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg"
               >
                 + 新增產品
@@ -472,13 +684,10 @@ export default function App() {
               {products.map(p => (
                 <div key={p.id} className="py-3 flex justify-between items-center">
                   <div>
-                    <div className="font-semibold">{p.name} ({p.code})</div>
+                    <div className="font-semibold text-slate-900">{p.name} ({p.code})</div>
                     <div className="text-xs text-slate-500">標準售價: NT$ {p.standardPrice.toLocaleString()} | 單位: {p.unit}</div>
                   </div>
-                  <div className="space-x-2">
-                    <button onClick={() => { setEditingProduct(p); setIsProductModalOpen(true); }} className="text-indigo-600 text-xs">編輯</button>
-                    <button onClick={() => setProducts(prev => prev.filter(x => x.id !== p.id))} className="text-rose-600 text-xs">刪除</button>
-                  </div>
+                  <button onClick={() => setProducts(prev => prev.filter(x => x.id !== p.id))} className="text-rose-600 text-xs hover:underline">刪除</button>
                 </div>
               ))}
             </div>
@@ -545,102 +754,6 @@ export default function App() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* 互動視窗 (Modals) */}
-      {isQuoteModalOpen && (
-        <QuotationModal
-          quotation={editingQuotation}
-          customers={customers}
-          vendors={vendors}
-          products={products}
-          onClose={() => setIsQuoteModalOpen(false)}
-          onSave={(newQuote) => {
-            setQuotations(prev => {
-              const idx = prev.findIndex(x => x.id === newQuote.id);
-              if (idx >= 0) {
-                const updated = [...prev];
-                updated[idx] = newQuote;
-                return updated;
-              }
-              return [newQuote, ...prev];
-            });
-            setIsQuoteModalOpen(false);
-          }}
-        />
-      )}
-
-      {isCustomerModalOpen && (
-        <CustomerModal
-          customer={editingCustomer}
-          onClose={() => setIsCustomerModalOpen(false)}
-          onSave={(c) => {
-            setCustomers(prev => {
-              const idx = prev.findIndex(x => x.id === c.id);
-              if (idx >= 0) {
-                const u = [...prev];
-                u[idx] = c;
-                return u;
-              }
-              return [...prev, c];
-            });
-            setIsCustomerModalOpen(false);
-          }}
-        />
-      )}
-
-      {isVendorModalOpen && (
-        <VendorModal
-          vendor={editingVendor}
-          onClose={() => setIsVendorModalOpen(false)}
-          onSave={(v) => {
-            setVendors(prev => {
-              const idx = prev.findIndex(x => x.id === v.id);
-              if (idx >= 0) {
-                const u = [...prev];
-                u[idx] = v;
-                return u;
-              }
-              return [...prev, v];
-            });
-            setIsVendorModalOpen(false);
-          }}
-        />
-      )}
-
-      {isProductModalOpen && (
-        <ProductModal
-          product={editingProduct}
-          vendors={vendors}
-          onClose={() => setIsProductModalOpen(false)}
-          onSave={(p) => {
-            setProducts(prev => {
-              const idx = prev.findIndex(x => x.id === p.id);
-              if (idx >= 0) {
-                const u = [...prev];
-                u[idx] = p;
-                return u;
-              }
-              return [...prev, p];
-            });
-            setIsProductModalOpen(false);
-          }}
-        />
-      )}
-
-      {printQuotation && (
-        <PrintView quotation={printQuotation} onClose={() => setPrintQuotation(null)} />
-      )}
-
-      {isHistoryModalOpen && selectedHistoryQuote && (
-        <HistoryModal
-          quotation={selectedHistoryQuote}
-          onClose={() => setIsHistoryModalOpen(false)}
-          onRestore={(oldQuote) => {
-            setQuotations(prev => prev.map(q => q.id === oldQuote.id ? oldQuote : q));
-            setIsHistoryModalOpen(false);
-          }}
-        />
       )}
     </div>
   );
