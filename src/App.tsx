@@ -1,78 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FileText, Users, Building2, Package, Plus, Search, Edit, Trash2, 
-  Printer, History, CheckCircle, Clock, AlertCircle, Send, Database, RefreshCw, Server
+  Printer, CheckCircle, Clock, AlertCircle, Send, Database, RefreshCw, Server
 } from 'lucide-react';
+import { Quotation, Customer, Vendor, Product } from './types';
+import QuotationModal from './components/QuotationModal';
+import CustomerModal from './components/CustomerModal';
+import VendorModal from './components/VendorModal';
+import ProductModal from './components/ProductModal';
+import PrintView from './components/PrintView';
 
-// 內建資料類型定義
-export interface QuotationItem {
-  id: string;
-  productId: string;
-  productCode: string;
-  productName: string;
-  spec: string;
-  quantity: number;
-  unit: string;
-  unitPrice: number;
-  amount: number;
-  costPrice?: number;
-  remark?: string;
-}
-
-export interface Quotation {
-  id: string;
-  quoteNumber: string;
-  date: string;
-  validUntil: string;
-  customerId: string;
-  customerName: string;
-  customerAddress?: string;
-  contactPerson?: string;
-  contactPhone?: string;
-  paymentTerms: string;
-  salesPerson: string;
-  status: '草稿' | '已發送' | '已確認' | '已作廢';
-  items: QuotationItem[];
-  subtotal: number;
-  tax: number;
-  total: number;
-  notes?: string;
-  history?: any[];
-}
-
-export interface Customer {
-  id: string;
-  code: string;
-  name: string;
-  contactPerson: string;
-  phone: string;
-  email?: string;
-  address: string;
-  taxId?: string;
-}
-
-export interface Vendor {
-  id: string;
-  code: string;
-  name: string;
-  contactPerson: string;
-  phone: string;
-  email?: string;
-  address?: string;
-}
-
-export interface Product {
-  id: string;
-  code: string;
-  name: string;
-  spec: string;
-  unit: string;
-  costPrice: number;
-  standardPrice: number;
-  vendorId?: string;
-}
-
-// 內建模擬初始資料
+// 預設資料
 const defaultCustomers: Customer[] = [
   {
     id: 'c1',
@@ -176,7 +114,7 @@ const defaultQuotations: Quotation[] = [
 export default function App() {
   const [activeTab, setActiveTab] = useState<'quotations' | 'customers' | 'vendors' | 'products'>('quotations');
   
-  // 本地狀態管理
+  // 本地狀態
   const [quotations, setQuotations] = useState<Quotation[]>(() => {
     const saved = localStorage.getItem('quotations');
     return saved ? JSON.parse(saved) : defaultQuotations;
@@ -197,6 +135,21 @@ export default function App() {
     return saved ? JSON.parse(saved) : defaultProducts;
   });
 
+  // 彈窗開關狀態
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+
+  const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
+  const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
+
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [editingQuotation, setEditingQuotation] = useState<Quotation | null>(null);
+
+  const [printQuotation, setPrintQuotation] = useState<Quotation | null>(null);
+
   // Neon 連線狀態
   const [dbStatus, setDbStatus] = useState<{
     connected: boolean;
@@ -212,7 +165,7 @@ export default function App() {
   const [showDbModal, setShowDbModal] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // 測試後端連線狀態
+  // 測試連線
   const checkDbConnection = async () => {
     setDbStatus(prev => ({ ...prev, loading: true }));
     try {
@@ -330,7 +283,6 @@ export default function App() {
             <div>
               <div className="flex items-center space-x-2">
                 <h1 className="text-lg font-bold text-slate-900 leading-none">報價單管理系統</h1>
-                {/* 動態連線狀態標籤 */}
                 {dbStatus.loading ? (
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
                     <RefreshCw className="w-3 h-3 mr-1 animate-spin" /> 連線檢查中
@@ -406,7 +358,6 @@ export default function App() {
               </button>
             </nav>
 
-            {/* Neon 設定按鈕 */}
             <button
               onClick={() => setShowDbModal(true)}
               className="flex items-center space-x-1 px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors shadow-xs"
@@ -432,40 +383,12 @@ export default function App() {
               </div>
               <button
                 onClick={() => {
-                  const newNo = `QT-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${String(quotations.length + 1).padStart(3, '0')}`;
-                  const newQ: Quotation = {
-                    id: String(Date.now()),
-                    quoteNumber: newNo,
-                    date: new Date().toISOString().slice(0,10),
-                    validUntil: new Date(Date.now() + 30*24*3600*1000).toISOString().slice(0,10),
-                    customerId: customers[0]?.id || '',
-                    customerName: customers[0]?.name || '新客戶',
-                    paymentTerms: '月結 30 天',
-                    salesPerson: '張業務',
-                    status: '草稿',
-                    items: [
-                      {
-                        id: String(Date.now() + 1),
-                        productId: products[0]?.id || '',
-                        productCode: products[0]?.code || 'PROD-01',
-                        productName: products[0]?.name || '示範項目',
-                        spec: '標準規格',
-                        quantity: 1,
-                        unit: '式',
-                        unitPrice: 50000,
-                        amount: 50000
-                      }
-                    ],
-                    subtotal: 50000,
-                    tax: 2500,
-                    total: 52500
-                  };
-                  setQuotations([newQ, ...quotations]);
-                  alert(`✅ 已建立新報價單草稿：${newNo}`);
+                  setEditingQuotation(null);
+                  setIsQuoteModalOpen(true);
                 }}
                 className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-xs transition-colors"
               >
-                <Plus className="w-4 h-4 mr-1.5" /> 快速開立報價單
+                <Plus className="w-4 h-4 mr-1.5" /> 開立新報價單
               </button>
             </div>
 
@@ -540,7 +463,7 @@ export default function App() {
                       <td className="py-3 px-4 text-center">
                         <div className="flex items-center justify-center space-x-2">
                           <button
-                            onClick={() => window.print()}
+                            onClick={() => setPrintQuotation(q)}
                             className="p-1 text-slate-500 hover:text-indigo-600 transition-colors"
                             title="列印 / 匯出 PDF"
                           >
@@ -548,11 +471,11 @@ export default function App() {
                           </button>
                           <button
                             onClick={() => {
-                              const newStatus = q.status === '草稿' ? '已發送' : q.status === '已發送' ? '已確認' : '草稿';
-                              setQuotations(prev => prev.map(item => item.id === q.id ? { ...item, status: newStatus as any } : item));
+                              setEditingQuotation(q);
+                              setIsQuoteModalOpen(true);
                             }}
                             className="p-1 text-slate-500 hover:text-indigo-600 transition-colors"
-                            title="變更狀態"
+                            title="編輯報價單"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
@@ -584,20 +507,10 @@ export default function App() {
               <h2 className="text-base font-bold text-slate-900">客戶基本資料</h2>
               <button
                 onClick={() => {
-                  const name = prompt('請輸入客戶名稱：');
-                  if (name) {
-                    const newC: Customer = {
-                      id: String(Date.now()),
-                      code: `CUST-${String(customers.length + 1).padStart(3, '0')}`,
-                      name,
-                      contactPerson: '負責人',
-                      phone: '02-8888-9999',
-                      address: '台北市'
-                    };
-                    setCustomers([...customers, newC]);
-                  }
+                  setEditingCustomer(null);
+                  setIsCustomerModalOpen(true);
                 }}
-                className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg"
+                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 + 新增客戶
               </button>
@@ -608,8 +521,25 @@ export default function App() {
                   <div>
                     <div className="font-semibold text-slate-900">{c.name} ({c.code})</div>
                     <div className="text-xs text-slate-500">聯絡人: {c.contactPerson} | 電話: {c.phone} | 統編: {c.taxId || '無'}</div>
+                    <div className="text-xs text-slate-400">{c.address}</div>
                   </div>
-                  <button onClick={() => setCustomers(prev => prev.filter(x => x.id !== c.id))} className="text-rose-600 text-xs hover:underline">刪除</button>
+                  <div className="space-x-2">
+                    <button
+                      onClick={() => {
+                        setEditingCustomer(c);
+                        setIsCustomerModalOpen(true);
+                      }}
+                      className="text-indigo-600 text-xs hover:underline"
+                    >
+                      編輯
+                    </button>
+                    <button
+                      onClick={() => setCustomers(prev => prev.filter(x => x.id !== c.id))}
+                      className="text-rose-600 text-xs hover:underline"
+                    >
+                      刪除
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -623,19 +553,10 @@ export default function App() {
               <h2 className="text-base font-bold text-slate-900">廠商基本資料</h2>
               <button
                 onClick={() => {
-                  const name = prompt('請輸入廠商名稱：');
-                  if (name) {
-                    const newV: Vendor = {
-                      id: String(Date.now()),
-                      code: `VEND-${String(vendors.length + 1).padStart(3, '0')}`,
-                      name,
-                      contactPerson: '窗口',
-                      phone: '03-5555-6666'
-                    };
-                    setVendors([...vendors, newV]);
-                  }
+                  setEditingVendor(null);
+                  setIsVendorModalOpen(true);
                 }}
-                className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg"
+                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 + 新增廠商
               </button>
@@ -647,7 +568,23 @@ export default function App() {
                     <div className="font-semibold text-slate-900">{v.name} ({v.code})</div>
                     <div className="text-xs text-slate-500">聯絡人: {v.contactPerson} | 電話: {v.phone}</div>
                   </div>
-                  <button onClick={() => setVendors(prev => prev.filter(x => x.id !== v.id))} className="text-rose-600 text-xs hover:underline">刪除</button>
+                  <div className="space-x-2">
+                    <button
+                      onClick={() => {
+                        setEditingVendor(v);
+                        setIsVendorModalOpen(true);
+                      }}
+                      className="text-indigo-600 text-xs hover:underline"
+                    >
+                      編輯
+                    </button>
+                    <button
+                      onClick={() => setVendors(prev => prev.filter(x => x.id !== v.id))}
+                      className="text-rose-600 text-xs hover:underline"
+                    >
+                      刪除
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -661,21 +598,10 @@ export default function App() {
               <h2 className="text-base font-bold text-slate-900">產品與價目資料</h2>
               <button
                 onClick={() => {
-                  const name = prompt('請輸入產品品名：');
-                  if (name) {
-                    const newP: Product = {
-                      id: String(Date.now()),
-                      code: `PROD-${String(products.length + 1).padStart(3, '0')}`,
-                      name,
-                      spec: '標準規格',
-                      unit: '式',
-                      costPrice: 10000,
-                      standardPrice: 20000
-                    };
-                    setProducts([...products, newP]);
-                  }
+                  setEditingProduct(null);
+                  setIsProductModalOpen(true);
                 }}
-                className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg"
+                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 + 新增產品
               </button>
@@ -685,9 +611,25 @@ export default function App() {
                 <div key={p.id} className="py-3 flex justify-between items-center">
                   <div>
                     <div className="font-semibold text-slate-900">{p.name} ({p.code})</div>
-                    <div className="text-xs text-slate-500">標準售價: NT$ {p.standardPrice.toLocaleString()} | 單位: {p.unit}</div>
+                    <div className="text-xs text-slate-500">規格: {p.spec} | 標準售價: NT$ {p.standardPrice.toLocaleString()} | 單位: {p.unit}</div>
                   </div>
-                  <button onClick={() => setProducts(prev => prev.filter(x => x.id !== p.id))} className="text-rose-600 text-xs hover:underline">刪除</button>
+                  <div className="space-x-2">
+                    <button
+                      onClick={() => {
+                        setEditingProduct(p);
+                        setIsProductModalOpen(true);
+                      }}
+                      className="text-indigo-600 text-xs hover:underline"
+                    >
+                      編輯
+                    </button>
+                    <button
+                      onClick={() => setProducts(prev => prev.filter(x => x.id !== p.id))}
+                      className="text-rose-600 text-xs hover:underline"
+                    >
+                      刪除
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -695,7 +637,95 @@ export default function App() {
         )}
       </main>
 
-      {/* 資料庫與同步管理彈窗 */}
+      {/* 4 個完整的互動彈窗 */}
+      {isCustomerModalOpen && (
+        <CustomerModal
+          customer={editingCustomer}
+          onClose={() => setIsCustomerModalOpen(false)}
+          onSave={(savedCust) => {
+            setCustomers(prev => {
+              const idx = prev.findIndex(x => x.id === savedCust.id);
+              if (idx >= 0) {
+                const u = [...prev];
+                u[idx] = savedCust;
+                return u;
+              }
+              return [...prev, savedCust];
+            });
+            setIsCustomerModalOpen(false);
+          }}
+        />
+      )}
+
+      {isVendorModalOpen && (
+        <VendorModal
+          vendor={editingVendor}
+          onClose={() => setIsVendorModalOpen(false)}
+          onSave={(savedVend) => {
+            setVendors(prev => {
+              const idx = prev.findIndex(x => x.id === savedVend.id);
+              if (idx >= 0) {
+                const u = [...prev];
+                u[idx] = savedVend;
+                return u;
+              }
+              return [...prev, savedVend];
+            });
+            setIsVendorModalOpen(false);
+          }}
+        />
+      )}
+
+      {isProductModalOpen && (
+        <ProductModal
+          product={editingProduct}
+          vendors={vendors}
+          onClose={() => setIsProductModalOpen(false)}
+          onSave={(savedProd) => {
+            setProducts(prev => {
+              const idx = prev.findIndex(x => x.id === savedProd.id);
+              if (idx >= 0) {
+                const u = [...prev];
+                u[idx] = savedProd;
+                return u;
+              }
+              return [...prev, savedProd];
+            });
+            setIsProductModalOpen(false);
+          }}
+        />
+      )}
+
+      {isQuoteModalOpen && (
+        <QuotationModal
+          quotation={editingQuotation}
+          customers={customers}
+          vendors={vendors}
+          products={products}
+          onClose={() => setIsQuoteModalOpen(false)}
+          onSave={(savedQuote) => {
+            setQuotations(prev => {
+              const idx = prev.findIndex(x => x.id === savedQuote.id);
+              if (idx >= 0) {
+                const u = [...prev];
+                u[idx] = savedQuote;
+                return u;
+              }
+              return [savedQuote, ...prev];
+            });
+            setIsQuoteModalOpen(false);
+          }}
+        />
+      )}
+
+      {printQuotation && (
+        <PrintView
+          quotation={printQuotation}
+          onClose={() => setPrintQuotation(null)}
+        />
+      )}
+
+      {/* Neon 資料庫管理彈窗 */}
       {showDbModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-4">
